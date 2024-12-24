@@ -55,11 +55,29 @@ async function run() {
     res.send(result)
    })
 
+   app.get('/allassignment', async(req,res)=>{
+    const filter = req.query.filter;
+    const query = {};
+    if(filter){
+         query.difficulty = filter
+    }
+    const newAssignment = campgainCollection.find(query);
+    const result = await newAssignment.toArray();
+    res.send(result)
+   })
+
 
    app.delete('/assignment/:id',async(req,res)=>{
     const id = req.params.id;
     const query = {_id: new ObjectId(id)};
     const result = await campgainCollection.deleteOne(query);
+    res.send(result)
+   })
+
+   app.get('/docs/:email',async(req,res)=>{
+    const email = req.params.email;
+    const query = { email: email };
+    const result = await campgainCollection.find(query).toArray();
     res.send(result)
    })
 
@@ -93,6 +111,32 @@ async function run() {
    app.get('/docs', async(req,res)=>{
     const newDocs = docsCollection.find();
     const result = await newDocs.toArray();
+    res.send(result)
+   })
+
+   app.put('/docs/:id',async(req,res)=>{
+    const id = req.params.id;
+    const filter = {_id: new ObjectId(id)};
+    const updateData = req.body; 
+
+    console.log(updateData.getMarks, 'marks');
+    console.log(updateData.feedback, 'feedback');
+
+    const update ={
+      $set: {
+        getMarks : updateData.getMarks,
+        feedback: updateData.feedback,
+        staus: updateData.staus,
+        
+        // marks: updateData.marks,
+        // thumbnail : updateData.thumbnail,
+        // difficulty : updateData.difficulty,
+        // dueDate : updateData.dueDate
+      },
+      
+    }
+
+    const result = await docsCollection.updateOne(filter,update)
     res.send(result)
    })
 
