@@ -2,6 +2,9 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+require('dotenv').config();
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -9,7 +12,32 @@ const app = express();
 
 // middleware 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://teal-meerkat-08607f.netlify.app'
+    ], 
+  credentials: true,
+}));
+app.use(cookieParser());
+
+// const verifyToken = (req,res,next){
+//   const token = req.cookies?.token;
+//   // console.log('token inside veru=idy',token);
+//   if(!token){
+//     return res.status(401).send({message : 'unauthorize'})
+//   }
+
+
+//   jwt.verify( token , process.env.DB_TOKEN , (err , decoded)=> {
+//     if(err){
+//       return res.status(401).send({message : 'unauthorize'})
+//     }
+
+//     next()
+
+//   })
+// }
 
 
 // zB31awhyLFjBjNGC
@@ -38,6 +66,31 @@ async function run() {
     const campgainCollection = client.db('campgainDb').collection('Assignment')
     const docsCollection = client.db('campgainDb').collection('docs')
 
+    // auth related apis
+    app.post('/jwt', (req,res)=>{
+      const user = req.body;
+      const token = jwt.sign(user , process.env.DB_TOKEN,{
+        expiresIn: '10h'
+      });
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.DB_TOKEN === 'production',
+        sameSite: process.env.DB_TOKEN === "production" ? "none" : "strict",
+      })
+      .send({success: true})
+    })
+
+    // jwt token log out
+
+    app.post('/logout',(req,res)=>{
+      res.clearCookie('token',{
+        httpOnly: true,
+        secure: process.env.DB_TOKEN === 'production'
+      }).send({success: true})
+      res.status(200).send('Logged out and token cleared!')
+    })
+
     // assignment   
 
    app.post('/assignment',async(req,res)=>{
@@ -54,9 +107,15 @@ async function run() {
     res.send(result)
    })
 
+
    app.get('/allassignment', async(req,res)=>{
     const filter = req.query.filter;
-    const query = {};
+    const search = req.query.search || '';
+    let query = {
+      title:{
+      $regex: search,
+      $options: 'i'
+    }};
     if(filter){
          query.difficulty = filter
     }
@@ -73,7 +132,7 @@ async function run() {
     res.send(result)
    })
 
-   app.get('/docs/:email',async(req,res)=>{
+   app.get('/docs/:email', async(req,res)=>{
     const email = req.params.email;
     const query = { email: email };
     const result = await campgainCollection.find(query).toArray();
@@ -133,10 +192,6 @@ async function run() {
     const result = await docsCollection.updateOne(filter,update)
     res.send(result)
    })
-
-  
-
-  
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
