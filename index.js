@@ -19,9 +19,8 @@ app.use(cors());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.xfvkq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-//  console.log(process.env.DB_USER ,'user vaiiiii');
-//  console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
-console.log(uri);
+
+// console.log(uri);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -127,11 +126,6 @@ async function run() {
         getMarks : updateData.getMarks,
         feedback: updateData.feedback,
         staus: updateData.staus,
-        
-        // marks: updateData.marks,
-        // thumbnail : updateData.thumbnail,
-        // difficulty : updateData.difficulty,
-        // dueDate : updateData.dueDate
       },
       
     }
